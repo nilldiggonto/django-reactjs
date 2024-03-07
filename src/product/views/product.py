@@ -99,6 +99,41 @@ class ProductListAPIView(APIView):
         })
         
 
+class ProductDetailsAPIView(APIView):
+    def get(self, request,*args,**kwargs):
+        pId = kwargs.get('product_id')
+        product = Product.objects.get(id=pId)
+        context = {
+            "title": product.title,
+            "description": product.description,
+            "sku": product.sku
+
+        }
+        product_image = ProductImage.objects.filter(product=product).last()
+        context['url'] = product_image.file_path.url if product_image and product_image.file_path else None# product_image.file_path.url if product_image.file_path if product_image else None
+        variants = []
+        product_variant = ProductVariant.objects.filter(product=product)
+        for variant in product_variant:
+            variants.append({
+                "option":variant.id,
+                "tags":[variant.variant_title]
+            })
+        context['variants'] = variants
+
+        product_prices = ProductVariantPrice.objects.filter(product=product)
+        variant_prices = []
+        for price in product_prices:
+            variant_prices.append({
+                "title": f'{price.product_variant_one.variant_title}/{price.product_variant_two.variant_title}/{price.product_variant_three.variant_title}',
+                "price": int(price.price),
+                "stock": int(price.stock)
+            })
+        context['variant_prices'] = variant_prices
+        return Response(context)
+
+
+
+
 class ProductSearchAPIView(APIView):
     pagination_class = CustomPagination
 

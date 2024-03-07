@@ -15,9 +15,10 @@ class Product(TimeStampMixin):
     description = models.TextField()
 
 
+
 class ProductImage(TimeStampMixin):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    file_path = models.URLField(null=True,blank=True)
+    file_path = models.ImageField(null=True,blank=True)
 
 
 class ProductVariant(TimeStampMixin):

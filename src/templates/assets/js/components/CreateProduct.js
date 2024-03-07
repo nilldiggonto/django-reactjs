@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState,useEffect} from 'react';
 import TagsInput from 'react-tagsinput';
 import 'react-tagsinput/react-tagsinput.css';
 import Dropzone from 'react-dropzone'
@@ -16,6 +16,32 @@ const CreateProduct = (props) => {
     ])
 
     const [file,setFile] = useState([])
+
+    useEffect(() => {
+        // Get the current URL
+        const url = window.location.href;
+
+        // Check if the URL contains "update"
+        if (url.includes("update")) {
+            // Extract the ID from the URL
+            const id = url.match(/\/update\/(\d+)/)[1];
+            
+            fetch('/product/api/details/' + id +'/')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('ProductName').value = data.title;
+                    document.getElementById('ProductSku').value = data.sku;
+                    document.getElementById('ProductDescription').value = data.description;
+                    setProductVariantPrices(data.variant_prices)
+                    setProductVariant(data.variants)
+                    setFile(data.url)
+                  
+                })
+                .catch(error => console.log(error));
+
+            // Now you can use the ID variable as needed
+        }
+    }, []);
 
     function getCookie(name) {
         let cookieValue = null;
@@ -72,8 +98,8 @@ const CreateProduct = (props) => {
         getCombn(tags).forEach(item => {
             setProductVariantPrices(productVariantPrice => [...productVariantPrice, {
                 title: item,
-                price: 0,
-                stock: 0
+                price: 10,
+                stock: 10
             }])
         })
 
@@ -263,8 +289,8 @@ const CreateProduct = (props) => {
                                                 return (
                                                     <tr key={index}>
                                                         <td>{productVariantPrice.title}</td>
-                                                        <td><input className="form-control" type="text"/></td>
-                                                        <td><input className="form-control" type="text"/></td>
+                                                        <td><input className="form-control" value={productVariantPrice.price} type="text"/></td>
+                                                        <td><input className="form-control" value={productVariantPrice.stock} type="text"/></td>
                                                     </tr>
                                                 )
                                             })
