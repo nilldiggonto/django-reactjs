@@ -1,5 +1,7 @@
 from django.db import models
 from config.g_model import TimeStampMixin
+from django.core.files.base import ContentFile
+import base64
 
 
 # Create your models here.
@@ -19,6 +21,18 @@ class Product(TimeStampMixin):
 class ProductImage(TimeStampMixin):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     file_path = models.ImageField(null=True,blank=True)
+
+    def save_image_from_base64(self, base64_data):
+        if base64_data.startswith('data:image'):
+            # Split the base64 data to get the actual data part
+            format, imgstr = base64_data.split(';base64,')
+            # Decode the base64 data
+            data = base64.b64decode(imgstr)
+            # Create a ContentFile object from the decoded data
+            file_name = 'image.png'  # You can set your desired file name here
+            file = ContentFile(data, name=file_name)
+            # Assign the ContentFile to the ImageField
+            self.file_path.save(file_name, file, save=True)
 
 
 class ProductVariant(TimeStampMixin):

@@ -1,5 +1,5 @@
 from django.views import generic
-
+from rest_framework.parsers import MultiPartParser, FormParser
 from product.models import *
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -7,6 +7,7 @@ from product.serializers.serializers import ProductListSerializer
 import datetime
 from django.db.models import Q
 from product.utils import CustomPagination,merge_variant
+import json
 
 class CreateProductView(generic.TemplateView):
     template_name = 'products/create.html'
@@ -22,6 +23,7 @@ class CreateProductView(generic.TemplateView):
     
 class ProductListAPIView(APIView):
     pagination_class = CustomPagination
+    # parser_classes = [MultiPartParser, FormParser]
     def get(self, request):
         products = Product.objects.all()
         serializer = ProductListSerializer(products, many=True)
@@ -42,42 +44,74 @@ class ProductListAPIView(APIView):
         image = request.data.get('image')
         variants = request.data.get('variants', [])
         prices = request.data.get('variant_prices', [])
-        print("p")
-        print("p")
-        print("p")
-        print("p")
+        productId = request.data.get('productId')
+        print(productId)
+        print(productId)
+        print(productId)
+        print(productId)
+        print(productId)
+        print(productId)
+   
         print(variants)
+        print(type(variants))
+
         print(prices)
         print(name)
         print(sku)
         print(description)
-        print(image)
-
+        # print(image)
+        variants = json.loads(variants)
+        prices = json.loads(prices)
         if not all([name, sku, description, image]):
             return Response({"error": "Missing required fields"})
 
-        if variants and not isinstance(variants, list):
-            return Response({"error": "Variants should be a list"})
-        
-        product = Product.objects.create(
-            title = name,
-            sku = sku,
-            description = description,
-        )
-        print(image)
-        ProductImage.objects.create(
-            product = product,
-            file_path = image
-        )
-        print("ok")
+        # if variants and not isinstance(variants, list):
+        #     return Response({"error": "Variants should be a list"})
+        product = None
+        if int(productId) !=0:
+            product = Product.objects.get(id=int(productId))
+            product.title = name
+            product.sku = sku
+            product.description = description
+            product.save()
+
+
+            product_image = ProductImage.objects.filter(product=product).last()
+            if product_image:
+                product_image.save_image_from_base64(image)
+                product_image.save()
+            else:
+                product_image = ProductImage(product=product)
+
+                product_image.save_image_from_base64(image)
+
+                # Save the ProductImage instance
+                product_image.save()
+            ProductVariant.objects.filter(product=product).delete()
+            ProductVariantPrice.objects.filter(product=product).delete()
+    
+        else:
+            product = Product.objects.create(
+                title = name,
+                sku = sku,
+                description = description,
+            )
+            # print(image)
+            product_image = ProductImage(product=product)
+
+            product_image.save_image_from_base64(image)
+
+            # Save the ProductImage instance
+            product_image.save()
 
         variant_list = []
 
         for variant in variants:
+            print(variant)
             title = ""
-            if variant.get('option') == 1:
+            if variant['option'] == 1:
                 title = "Size"
-            elif variant.get('option') == 2:
+            elif variant['option'] == 2:
                 title = "Color"
             else:
                 title = "Style"
@@ -85,7 +119,7 @@ class ProductListAPIView(APIView):
             v,_ =Variant.objects.get_or_create(
                 title = title
             )
-            for tag in variant.get('tags'):
+            for tag in variant['tags']:
                 p_variant =ProductVariant.objects.create(
                     product = product,
                     variant_title = tag,
@@ -110,13 +144,14 @@ class ProductListAPIView(APIView):
             "image": image,
             "variants": variants
         })
-        
+    
 
 class ProductDetailsAPIView(APIView):
     def get(self, request,*args,**kwargs):
         pId = kwargs.get('product_id')
         product = Product.objects.get(id=pId)
         context = {
+            "id": product.id,
             "title": product.title,
             "description": product.description,
             "sku": product.sku

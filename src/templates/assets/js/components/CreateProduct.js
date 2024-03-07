@@ -16,6 +16,7 @@ const CreateProduct = (props) => {
     ])
 
     const [file,setFile] = useState([])
+    const [updatePage,setUpdatePage] = useState(0)
     const [image, setImage] = useState(null);
     // const [imgSrc, setImgSrc] = useState([])
 
@@ -37,6 +38,7 @@ const CreateProduct = (props) => {
                     setProductVariantPrices(data.variant_prices)
                     setProductVariant(data.variants)
                     setImage(data.url)
+                    setUpdatePage(data.id)
                   
                 })
                 .catch(error => console.log(error));
@@ -147,12 +149,13 @@ const CreateProduct = (props) => {
         formData.append('description', productDescription);
         formData.append('variants', JSON.stringify(variants));
         formData.append('variant_prices', JSON.stringify(variantPrices));
+        formData.append('productId', updatePage);
 
         const csrftoken = getCookie('csrftoken');
         fetch('/product/api/list/', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                // 'Content-Type': 'application/json',
                 //csrf
                 'X-CSRFToken':csrftoken
                 
@@ -169,6 +172,8 @@ const CreateProduct = (props) => {
                 
             ])
             setProductVariantPrices([])
+            setUpdatePage(0)
+            window.location.href = '/product/list/'
 
         })
         .then(data =>{})
