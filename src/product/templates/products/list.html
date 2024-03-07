@@ -124,16 +124,20 @@
 
         </div>
 
-        <!-- <div class="card-footer">
+        <div class="card-footer">
             <div class="row justify-content-between">
-                <div class="col-md-6">
-                    <p>Showing 1 to 10 out of 100</p>
+                <div class="col-md-6" id="pag-summary">
+                    
                 </div>
                 <div class="col-md-2">
-
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            <!-- Pagination links will be generated here -->
+                        </ul>
+                    </nav>
                 </div>
             </div>
-        </div> -->
+        </div>
     </div>
 {% endblock %}
 
@@ -141,11 +145,26 @@
 
 <script>
 
-// var table = new DataTable('#dataTable');
-// var table = new DataTable('#dataTable', {
-//                 // paging: false,
-//                 // searching: false,
-//             });
+function generatePagination(links) {
+        const paginationUl = document.querySelector('.pagination');
+        paginationUl.innerHTML = ''; // Clear existing pagination
+
+        if (links.previous) {
+            const previousLi = document.createElement('li');
+            previousLi.classList.add('page-item');
+            previousLi.innerHTML = `<a class="page-link" href="#" onclick="productList('${links.previous}')">Previous</a>`;
+            paginationUl.appendChild(previousLi);
+        }
+
+        if (links.next) {
+            const nextLi = document.createElement('li');
+            nextLi.classList.add('page-item');
+            nextLi.innerHTML = `<a class="page-link" href="#" onclick="productList('${links.next}')">Next</a>`;
+            paginationUl.appendChild(nextLi);
+        }
+    }
+
+
 
 function renderListHtml(data){
     const productDiv = document.getElementById('product');
@@ -192,32 +211,24 @@ function renderListHtml(data){
             productDiv.innerHTML = html;
 }
 
-function productList() {
-    fetch('/product/api/list/')
+function productList(url) {
+    fetch(url)
         .then(response => response.json())
-        .then(data => {
-            renderListHtml(data)
-           
-            new DataTable('#dataTable', {
-         
-            });
-            // table.destroy();
+        .then(res => {
+            const productList = res['data']
+            renderListHtml(productList)
+            document.getElementById('pag-summary').innerHTML = `
+                <p>Showing 1 to ${res.current_data} out of ${res.count}</p>
+            `
 
-            // Now recreate the DataTable
-            // const table = new DataTable('#dataTable', {
-            //     // New configurations
-            // });
-
-            // let table = new DataTable('#dataTable', {
-            //     //hide search box
-            // });
+            generatePagination(res['links'])
 
         })
         .catch(error => console.log(error));
 }
 
 
-    productList();
+    productList('/product/api/list/');
 
 function get_product_variants(id){
     fetch('/product/api/variant/list/?id='+id)
@@ -250,26 +261,15 @@ function onSearch(){
 
     fetch('/product/api/search/?title='+title+'&variant='+variant+'&starting_price='+starting_price+'&ending_price='+ending_price+'&time='+time)
         .then(response => response.json())
-        .then(data => {
-            renderListHtml(data)
+        .then(res => {
+            const productList = res['data']
+            renderListHtml(productList)
+            document.getElementById('pag-summary').innerHTML = `
+                <p>Showing 1 to ${res.current_data} out of ${res.count}</p>
+            `
 
-        //     if ($.fn.DataTable.isDataTable('#dataTable')) {
-        //     $('#dataTable').DataTable().destroy();
-        // }
+            // generatePagination(res['links'])
 
-        //     new DataTable('#dataTable');
-
-
-            // Now recreate the DataTable
-           
-
-            // if ( ! $.fn.DataTable.isDataTable( '#dataTable' ) ) {
-            //     $('#dataTable').DataTable();
-            // }
-
-            // let table = new DataTable('#dataTable', {
-            //     // hide search box
-            // });
 
         })
         .catch(error => console.log(error));

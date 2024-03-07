@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from product.serializers.serializers import ProductListSerializer
 import datetime
 from django.db.models import Q
+from product.utils import CustomPagination
 
 class CreateProductView(generic.TemplateView):
     template_name = 'products/create.html'
@@ -20,10 +21,19 @@ class CreateProductView(generic.TemplateView):
 # Showing Product List 
     
 class ProductListAPIView(APIView):
+    pagination_class = CustomPagination
     def get(self, request):
         products = Product.objects.all()
         serializer = ProductListSerializer(products, many=True)
-        return Response(serializer.data)
+
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(products, request)
+        serializer = ProductListSerializer(result_page, many=True)
+
+        # print(serializer.data)
+        data = paginator.get_paginated_response(serializer.data)
+
+        return Response(data)
     
     def post(self, request,*args,**kwargs):
         name = request.data.get('name')
@@ -90,6 +100,8 @@ class ProductListAPIView(APIView):
         
 
 class ProductSearchAPIView(APIView):
+    pagination_class = CustomPagination
+
     def get(self, request):
         title = request.GET.get('title', None)
         variant = request.GET.get('variant', None)
@@ -115,8 +127,15 @@ class ProductSearchAPIView(APIView):
         if time:
             time = datetime.datetime.strptime(time, '%Y-%m-%d')
             products = products.filter(created_at__year=time.year, created_at__month=time.month, created_at__day=time.day)
+        
 
-        serializer = ProductListSerializer(products, many=True)
-        return Response(serializer.data)
+        paginator = self.pagination_class()
+        result_page = paginator.paginate_queryset(products, request)
+        serializer = ProductListSerializer(result_page, many=True)
+
+        # print(serializer.data)
+        data = paginator.get_paginated_response(serializer.data)
+
+        return Response(data)
     
     
