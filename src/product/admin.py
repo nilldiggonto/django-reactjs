@@ -5,5 +5,6 @@ admin.site.register(Product)
 admin.site.register(ProductVariant)
 admin.site.register(ProductImage)
 admin.site.register(ProductVariantPrice)
+admin.site.register(Variant)
 
 
