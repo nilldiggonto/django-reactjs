@@ -24,6 +24,70 @@ class ProductListAPIView(APIView):
         products = Product.objects.all()
         serializer = ProductListSerializer(products, many=True)
         return Response(serializer.data)
+    
+    def post(self, request,*args,**kwargs):
+        name = request.data.get('name')
+        sku = request.data.get('sku')
+        description = request.data.get('description')
+        image = request.data.get('image')
+        variants = request.data.get('variants', [])
+        prices = request.data.get('variant_prices', [])
+
+        if not all([name, sku, description, image]):
+            return Response({"error": "Missing required fields"})
+
+        if variants and not isinstance(variants, list):
+            return Response({"error": "Variants should be a list"})
+        
+        product = Product.objects.create(
+            title = name,
+            sku = sku,
+            description = description,
+        )
+        ProductImage.objects.create(
+            product = product,
+        )
+
+        variant_list = []
+
+        for variant in variants:
+            title = ""
+            if variant.get('option') == 1:
+                title = "Size"
+            elif variant.get('option') == 2:
+                title = "Color"
+            else:
+                title = "Style"
+
+            v,_ =Variant.objects.get_or_create(
+                title = title
+            )
+            for tag in variant.get('tags'):
+                p_variant =ProductVariant.objects.create(
+                    product = product,
+                    variant_title = tag,
+                    variant = v
+                )
+                variant_list.append(p_variant)
+        price = prices[0]
+        ProductVariantPrice.objects.create(
+            product_variant_one = variant_list[0],
+            product_variant_two = variant_list[1],
+            product_variant_three = variant_list[2],
+            price = price['price'],
+            stock = price['stock'],
+            product = product
+        )
+                
+
+        return Response({
+            "name": name,
+            "sku": sku,
+            "description": description,
+            "image": image,
+            "variants": variants
+        })
+        
 
 class ProductSearchAPIView(APIView):
     def get(self, request):
@@ -41,7 +105,7 @@ class ProductSearchAPIView(APIView):
             products = Product.objects.filter(pk__in=[p.pk for p in products])
 
         if starting_price and ending_price:
-            print(type(float(starting_price)))
+            # print(type(float(starting_price)))
             variants = ProductVariantPrice.objects.filter(price__gte=float(starting_price))
             variants = variants.filter(price__lte=float(ending_price))
             products = [v.product for v in variants]
@@ -54,41 +118,5 @@ class ProductSearchAPIView(APIView):
 
         serializer = ProductListSerializer(products, many=True)
         return Response(serializer.data)
-        # query = request.GET.get('q')
-        # title = request.GET.get('title',None)
-        # variant = request.GET.get('variant',None)
-        # starting_price = request.GET.get('starting_price',None)
-        # ending_price = request.GET.get('ending_price',None)
-        # time = request.GET.get('time',None)
-
-        # #if time convert time to qs for django
-        # products = None
-        # if time and title is None and variant is None and starting_price is None and ending_price is None:
-        #     time = datetime.datetime.strptime(time, '%Y-%m-%d')
-        #     products = Product.objects.filter(created_at__year=time.year, created_at__month=time.month, created_at__day=time.day)
-        
-        # if title  and time is None and variant is None and starting_price is None and ending_price is None:
-        #     products = Product.objects.filter(title__icontains=title)
-        
-        # if variant and time is None and title is None and starting_price is None and ending_price is None:
-        #     variants = ProductVariant.objects.filter(variant_title=variant)
-        #     products = [v.product for v in variants]
-        
-        # if starting_price and ending_price and time is None and title is None and variant is None:
-        #     variants = ProductVariantPrice.objects.filter(price__gte=starting_price, price__lte=ending_price)
-        #     products = [v.product for v in variants]
-
-        # if title and variant and time and starting_price and ending_price:
-        #     time = datetime.datetime.strptime(time, '%Y-%m-%d')
-
-        #     variants = ProductVariantPrice.objects.filter(price__gte=starting_price, price__lte=ending_price)
-        #     products = [v.product for v in variants]
-        #     products = Product.objects.filter(title__icontains=title, pk__in=[p.pk for p in products])
-        #     products = products.filter(created_at__year=time.year, created_at__month=time.month, created_at__day=time.day)
-
-        #     variant = ProductVariant.objects.filter(variant_title=variant)
-        #     v_products = [v.product for v in variant]
-        #     products = products.filter(pk__in=[p.pk for p in v_products])
-
-        # serializer = ProductListSerializer(products, many=True)
-        # return Response(serializer.data)
+    
+    

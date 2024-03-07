@@ -14,7 +14,24 @@ const CreateProduct = (props) => {
             tags: []
         }
     ])
-    console.log(typeof props.variants)
+
+    const [file,setFile] = useState([])
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+   
     // handle click event of the Add button
     const handleAddClick = () => {
         let all_variants = JSON.parse(props.variants.replaceAll("'", '"')).map(el => el.id)
@@ -76,7 +93,52 @@ const CreateProduct = (props) => {
 
     // Save product
     let saveProduct = (event) => {
-        event.preventDefault();
+        event.preventDefault()
+        const productName = document.getElementById('ProductName').value;
+        const productSku = document.getElementById('ProductSku').value;
+        const productDescription = document.getElementById('ProductDescription').value;
+        const imagefile = file[0].name
+        const variants = productVariants
+        const variantPrices = productVariantPrices
+
+        const data = JSON.stringify({
+            name: productName,
+            sku: productSku,
+            description: productDescription,
+            image: imagefile,
+            variants: variants,
+            variant_prices: variantPrices
+        })
+        console.log(data)
+        const csrftoken = getCookie('csrftoken');
+        fetch('/product/api/list/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                //csrf
+                'X-CSRFToken':csrftoken
+                
+            },
+            body: JSON.stringify({
+                name: productName,
+                sku: productSku,
+                description: productDescription,
+                image: imagefile,
+                variants: variants,
+                variant_prices: productVariantPrices
+            })
+        })
+        .then(response => {
+            setFile([])
+            setProductVariant([
+                
+            ])
+            setProductVariantPrices([])
+
+        })
+        .then(data => console.log(data))
+
+
         // TODO : write your code here to save the product
     }
 
@@ -90,15 +152,15 @@ const CreateProduct = (props) => {
                             <div className="card-body">
                                 <div className="form-group">
                                     <label htmlFor="">Product Name</label>
-                                    <input type="text" placeholder="Product Name" className="form-control"/>
+                                    <input id='ProductName' type="text" placeholder="Product Name" className="form-control"/>
                                 </div>
                                 <div className="form-group">
                                     <label htmlFor="">Product SKU</label>
-                                    <input type="text" placeholder="Product Name" className="form-control"/>
+                                    <input id='ProductSku' type="text" placeholder="Product Name" className="form-control"/>
                                 </div>
                                 <div className="form-group">
                                     <label htmlFor="">Description</label>
-                                    <textarea id="" cols="30" rows="4" className="form-control"></textarea>
+                                    <textarea  id="ProductDescription" cols="30" rows="4" className="form-control"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -109,7 +171,7 @@ const CreateProduct = (props) => {
                                 <h6 className="m-0 font-weight-bold text-primary">Media</h6>
                             </div>
                             <div className="card-body border">
-                                <Dropzone onDrop={acceptedFiles => console.log(acceptedFiles)}>
+                                <Dropzone onDrop={acceptedFiles => setFile(acceptedFiles)}>
                                     {({getRootProps, getInputProps}) => (
                                         <section>
                                             <div {...getRootProps()}>

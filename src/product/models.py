@@ -5,7 +5,7 @@ from config.g_model import TimeStampMixin
 # Create your models here.
 class Variant(TimeStampMixin):
     title = models.CharField(max_length=40, unique=True)
-    description = models.TextField()
+    description = models.TextField(null=True, blank=True)
     active = models.BooleanField(default=True)
 
 
@@ -17,7 +17,7 @@ class Product(TimeStampMixin):
 
 class ProductImage(TimeStampMixin):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    file_path = models.URLField()
+    file_path = models.URLField(null=True,blank=True)
 
 
 class ProductVariant(TimeStampMixin):
