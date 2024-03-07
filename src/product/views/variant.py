@@ -2,7 +2,10 @@ from django.views import generic
 from django.views.generic import ListView, CreateView, UpdateView
 
 from product.forms import VariantForm
-from product.models import Variant
+from product.models import Variant,ProductVariant
+from rest_framework.views import APIView
+from rest_framework.response import Response
+# from 
 
 
 class BaseVariantView(generic.View):
@@ -39,3 +42,11 @@ class VariantCreateView(BaseVariantView, CreateView):
 
 class VariantEditView(BaseVariantView, UpdateView):
     pk_url_kwarg = 'id'
+
+
+class VariantListAPIView(APIView):
+    def get(self, request):
+        variant = Variant.objects.get(id=int(request.GET.get('id')))
+        variants = ProductVariant.objects.filter(variant=variant).values('variant_title').distinct()
+        # serializer = [{'title': variant.variant_title} for variant in variants]
+        return Response(variants)

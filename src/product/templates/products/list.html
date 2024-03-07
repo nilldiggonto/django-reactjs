@@ -16,8 +16,18 @@
                     <input type="text" name="title" placeholder="Product Title" class="form-control">
                 </div>
                 <div class="col-md-2">
-                    <select name="variant" id="" class="form-control">
+                    <select name="variant" id="" class="form-control" onchange="get_product_variants(this.value)">
                         <option selected disabled>--Select A Variant--</option>
+                        {% for variant in variants %}
+                            <option value="{{ variant.id }}">{{ variant.title }}</option>
+                        {% endfor %}
+
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <select name="variant" id="productVariants" class="form-control">
+                        
 
                     </select>
                 </div>
@@ -43,7 +53,7 @@
 
         <div class="card-body">
             <div class="table-response">
-                <table class="table">
+                <table class="table" id="dataTable">
                     <thead>
                     <tr>
                         <th>#</th>
@@ -114,7 +124,7 @@
 
         </div>
 
-        <div class="card-footer">
+        <!-- <div class="card-footer">
             <div class="row justify-content-between">
                 <div class="col-md-6">
                     <p>Showing 1 to 10 out of 100</p>
@@ -123,7 +133,7 @@
 
                 </div>
             </div>
-        </div>
+        </div> -->
     </div>
 {% endblock %}
 
@@ -131,11 +141,8 @@
 
 <script>
 
-function productList() {
-    fetch('/product/api/list/')
-        .then(response => response.json())
-        .then(data => {
-            const productDiv = document.getElementById('product');
+function renderListHtml(data){
+    const productDiv = document.getElementById('product');
             let html = ''; // Create a variable to store HTML content
             data.forEach(element => {
                 html += `
@@ -177,12 +184,42 @@ function productList() {
             });
             // Append the HTML content to the productDiv
             productDiv.innerHTML = html;
+}
+
+function productList() {
+    fetch('/product/api/list/')
+        .then(response => response.json())
+        .then(data => {
+            renderListHtml(data)
+
+            let table = new DataTable('#dataTable', {
+                //hide search box
+            });
+
         })
         .catch(error => console.log(error));
 }
 
 
     productList();
+
+function get_product_variants(id){
+    fetch('/product/api/variant/list/?id='+id)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('productVariants').innerHTML = ""
+            data.forEach(element => {
+                document.getElementById('productVariants').innerHTML +=`
+                <option value="${element.variant_title}">${element.variant_title}</option>
+
+            `
+            })
+           
+        })
+}
+
+
+
 </script>
 
 {% endblock %}
