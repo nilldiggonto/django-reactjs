@@ -16,6 +16,8 @@ const CreateProduct = (props) => {
     ])
 
     const [file,setFile] = useState([])
+    const [image, setImage] = useState(null);
+    // const [imgSrc, setImgSrc] = useState([])
 
     useEffect(() => {
         // Get the current URL
@@ -34,7 +36,7 @@ const CreateProduct = (props) => {
                     document.getElementById('ProductDescription').value = data.description;
                     setProductVariantPrices(data.variant_prices)
                     setProductVariant(data.variants)
-                    setFile(data.url)
+                    setImage(data.url)
                   
                 })
                 .catch(error => console.log(error));
@@ -42,6 +44,17 @@ const CreateProduct = (props) => {
             // Now you can use the ID variable as needed
         }
     }, []);
+
+    const handleDrop = acceptedFiles => {
+        const file = acceptedFiles[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImage(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     function getCookie(name) {
         let cookieValue = null;
@@ -123,19 +136,18 @@ const CreateProduct = (props) => {
         const productName = document.getElementById('ProductName').value;
         const productSku = document.getElementById('ProductSku').value;
         const productDescription = document.getElementById('ProductDescription').value;
-        const imagefile = file[0].name
+        // const imagefile = file[0].name
         const variants = productVariants
         const variantPrices = productVariantPrices
 
-        const data = JSON.stringify({
-            name: productName,
-            sku: productSku,
-            description: productDescription,
-            image: imagefile,
-            variants: variants,
-            variant_prices: variantPrices
-        })
-        console.log(data)
+        const formData = new FormData();
+        formData.append('image', image);
+        formData.append('name', productName);
+        formData.append('sku', productSku);
+        formData.append('description', productDescription);
+        formData.append('variants', JSON.stringify(variants));
+        formData.append('variant_prices', JSON.stringify(variantPrices));
+
         const csrftoken = getCookie('csrftoken');
         fetch('/product/api/list/', {
             method: 'POST',
@@ -145,24 +157,21 @@ const CreateProduct = (props) => {
                 'X-CSRFToken':csrftoken
                 
             },
-            body: JSON.stringify({
-                name: productName,
-                sku: productSku,
-                description: productDescription,
-                image: imagefile,
-                variants: variants,
-                variant_prices: productVariantPrices
-            })
+            body: formData
         })
         .then(response => {
-            setFile([])
+            document.getElementById('ProductName').value = ""
+            document.getElementById('ProductSku').value = ""
+            document.getElementById('ProductDescription').value = ""
+
+            setImage(null)
             setProductVariant([
                 
             ])
             setProductVariantPrices([])
 
         })
-        .then(data => console.log(data))
+        .then(data =>{})
 
 
         // TODO : write your code here to save the product
@@ -197,16 +206,17 @@ const CreateProduct = (props) => {
                                 <h6 className="m-0 font-weight-bold text-primary">Media</h6>
                             </div>
                             <div className="card-body border">
-                                <Dropzone onDrop={acceptedFiles => setFile(acceptedFiles)}>
-                                    {({getRootProps, getInputProps}) => (
-                                        <section>
-                                            <div {...getRootProps()}>
-                                                <input {...getInputProps()} />
-                                                <p>Drag 'n' drop some files here, or click to select files</p>
-                                            </div>
-                                        </section>
-                                    )}
-                                </Dropzone>
+                            <Dropzone onDrop={handleDrop}>
+                                {({ getRootProps, getInputProps }) => (
+                                    <section>
+                                        <div {...getRootProps()}>
+                                            <input {...getInputProps()} />
+                                            <p>Drag 'n' drop some files here, or click to select files</p>
+                                        </div>
+                                        {image && <img src={image} alt="Uploaded" style={{ width: 300, height: 300 }} />}
+                                    </section>
+                                )}
+                            </Dropzone>
                             </div>
                         </div>
                     </div>

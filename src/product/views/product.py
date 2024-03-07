@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from product.serializers.serializers import ProductListSerializer
 import datetime
 from django.db.models import Q
-from product.utils import CustomPagination
+from product.utils import CustomPagination,merge_variant
 
 class CreateProductView(generic.TemplateView):
     template_name = 'products/create.html'
@@ -42,6 +42,16 @@ class ProductListAPIView(APIView):
         image = request.data.get('image')
         variants = request.data.get('variants', [])
         prices = request.data.get('variant_prices', [])
+        print("p")
+        print("p")
+        print("p")
+        print("p")
+        print(variants)
+        print(prices)
+        print(name)
+        print(sku)
+        print(description)
+        print(image)
 
         if not all([name, sku, description, image]):
             return Response({"error": "Missing required fields"})
@@ -54,9 +64,12 @@ class ProductListAPIView(APIView):
             sku = sku,
             description = description,
         )
+        print(image)
         ProductImage.objects.create(
             product = product,
+            file_path = image
         )
+        print("ok")
 
         variant_list = []
 
@@ -115,10 +128,10 @@ class ProductDetailsAPIView(APIView):
         product_variant = ProductVariant.objects.filter(product=product)
         for variant in product_variant:
             variants.append({
-                "option":variant.id,
-                "tags":[variant.variant_title]
+                "option":1 if variant.variant.title.lower() == 'size' else 2 if variant.variant.title.lower() == 'color' else 3,
+                "tags": [variant.variant_title]
             })
-        context['variants'] = variants
+        context['variants'] = merge_variant(variants)
 
         product_prices = ProductVariantPrice.objects.filter(product=product)
         variant_prices = []
