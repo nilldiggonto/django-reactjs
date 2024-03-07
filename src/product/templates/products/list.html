@@ -54,7 +54,7 @@
                     </tr>
                     </thead>
 
-                    <tbody>
+                    <tbody id="product">
                     <tr>
                         <td>1</td>
                         <td>T-Shirt <br> Created at : 25-Aug-2020</td>
@@ -126,3 +126,64 @@
         </div>
     </div>
 {% endblock %}
+
+{%block script %} 
+
+<script>
+
+function productList() {
+    fetch('/product/api/list/')
+        .then(response => response.json())
+        .then(data => {
+            const productDiv = document.getElementById('product');
+            let html = ''; // Create a variable to store HTML content
+            data.forEach(element => {
+                html += `
+                <tr>
+                    <td>${element.id}</td>
+                    <td>${element.title} <br> Created at : ${element.created_at}</td>
+                    <td>${element.description}</td>
+                    <td>
+                        <dl class="row mb-0" style="height: 80px; overflow: hidden" id="variant${element.id}">
+                `;
+                element['product_variants_sales'].forEach(variant => {
+                    const outputArray = [variant.variant_one_title, variant.variant_two_title, variant.variant_three_title].filter(Boolean);
+                    const output = outputArray.join('/');
+
+                    html += `
+                        <dt class="col-sm-3 pb-0">
+                            ${output}
+                        </dt>
+                        <dd class="col-sm-9">
+                            <dl class="row mb-0">
+                                <dd class="col-sm-4 pb-0">Price : ${variant.price}</dd>
+                                <dd class="col-sm-8 pb-0">InStock : ${variant.stock}</dd>
+                            </dl>
+                        </dd>
+                    `;
+                });
+                html += `
+                        </dl>
+                        <button onclick="$('#variant${element.id}').toggleClass('h-auto')" class="btn btn-sm btn-link">Show more</button>
+                    </td>
+
+                    <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="" class="btn btn-success">Edit</a>
+                            </div>
+                        </td>
+                </tr>
+                `;
+            });
+            // Append the HTML content to the productDiv
+            productDiv.innerHTML = html;
+        })
+        .catch(error => console.log(error));
+}
+
+
+    productList();
+</script>
+
+{% endblock %}
+

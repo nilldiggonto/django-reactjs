@@ -69,6 +69,10 @@ TEMPLATES = [
     },
 ]
 
+#Django drf time formtat 25-Aug-2020
+REST_FRAMEWORK = {
+    'DATETIME_FORMAT': "%d-%b-%Y",
+}
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database

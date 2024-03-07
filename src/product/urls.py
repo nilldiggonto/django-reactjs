@@ -19,5 +19,5 @@ urlpatterns = [
     }), name='list.product'),
 
     #API URLS
-    path('api/products/', ProductListAPIView.as_view(), name='api.product.list'),
+    path('api/list/', ProductListAPIView.as_view(), name='api.product.list'),
 ]

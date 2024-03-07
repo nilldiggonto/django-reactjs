@@ -17,16 +17,15 @@ class ProductVariantPriceSerializer(serializers.ModelSerializer):
 class ProductListSerializer(serializers.ModelSerializer):
     # product_variants = serializers.SerializerMethodField()
     product_variants_sales = serializers.SerializerMethodField()
+    #25-Aug-2020
+
     class Meta:
         model = Product
-        fields = ['id', 'title', 'sku', 'description','product_variants_sales']
-    
-    # def get_product_variants(self, obj):
-    #     variants = ProductVariant.objects.filter(product_id=obj.id)
-    #     # serializer = ProductVariantSerializer(variants, many=True)
-    #     return serializer.data
+        fields = ['id', 'title', 'sku', 'description','product_variants_sales', 'created_at', 'updated_at']
     
     def get_product_variants_sales(self, obj):
         variants_price = ProductVariantPrice.objects.filter(product_id=obj.id)
         serializer = ProductVariantPriceSerializer(variants_price, many=True)
         return serializer.data
+    
+    
